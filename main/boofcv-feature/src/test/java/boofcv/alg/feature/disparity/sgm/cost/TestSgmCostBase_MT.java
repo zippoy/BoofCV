@@ -18,27 +18,14 @@
 
 package boofcv.alg.feature.disparity.sgm.cost;
 
-import boofcv.alg.feature.disparity.sgm.SgmDisparityCost;
-import boofcv.alg.misc.ImageMiscOps;
-import boofcv.struct.image.GrayU8;
+import org.junit.jupiter.api.Test;
 
-/**
- * @author Peter Abeles
- */
-class TestSgmMutualInformation_U8 extends ChecksSgmDisparityCost {
+import static org.junit.jupiter.api.Assertions.fail;
 
-	@Override
-	SgmDisparityCost<GrayU8> createAlg() {
-		StereoMutualInformation smi = new StereoMutualInformation();
-		smi.configureHistogram(numGrayLevels);
-
-		// A bit of a hack below.
-		// Everything his high cost but the same pixel values
-		ImageMiscOps.fill(smi.scaledCost,1000);
-		for (int i = 0; i < numGrayLevels; i++) {
-			smi.scaledCost.set(i,i, 10);
-		}
-
-		return new SgmCostBase<>(new SgmMutualInformation_U8(smi));
+class TestSgmCostBase_MT {
+	@Test
+	void implement() {
+		fail("implement");
 	}
 }
+

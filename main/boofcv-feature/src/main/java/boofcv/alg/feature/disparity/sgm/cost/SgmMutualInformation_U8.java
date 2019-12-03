@@ -18,6 +18,7 @@
 
 package boofcv.alg.feature.disparity.sgm.cost;
 
+import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
 
 /**
@@ -28,7 +29,8 @@ import boofcv.struct.image.GrayU8;
  *
  * @author Peter Abeles
  */
-public class SgmMutualInformation_U8 extends SgmCostBase<GrayU8> {
+public class SgmMutualInformation_U8 implements SgmCostBase.ComputeErrors<GrayU8> {
+	SgmCostBase<GrayU8> owner;
 	StereoMutualInformation mutual;
 
 	public SgmMutualInformation_U8(StereoMutualInformation mutual) {
@@ -36,11 +38,13 @@ public class SgmMutualInformation_U8 extends SgmCostBase<GrayU8> {
 	}
 
 	@Override
-	protected void computeDisparityErrors(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax) {
-		int valLeft = left.data[idxLeft] & 0xFF;
+	public void process(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax, GrayU16 _costXD) {
+		final int valLeft = owner.left.data[idxLeft] & 0xFF;
+		final byte[] rightData = owner.right.data;
+		final short[] costXD = _costXD.data;
 		for (int d = disparityMin; d <= disparityMax; d++) {
-			int valRight = right.data[idxRight--] & 0xFF;
-			costXD.data[idxOut++] = (short)mutual.costScaled(valLeft,valRight);
+			int valRight = rightData[idxRight--] & 0xFF;
+			costXD[idxOut++] = (short)mutual.costScaled(valLeft,valRight);
 		}
 	}
 
@@ -48,4 +52,8 @@ public class SgmMutualInformation_U8 extends SgmCostBase<GrayU8> {
 		return mutual;
 	}
 
+	@Override
+	public void setOwner(SgmCostBase<GrayU8> owner) {
+		this.owner = owner;
+	}
 }

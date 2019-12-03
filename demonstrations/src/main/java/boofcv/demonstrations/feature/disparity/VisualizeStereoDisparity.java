@@ -649,14 +649,16 @@ public class VisualizeStereoDisparity <T extends ImageGray<T>, D extends ImageGr
 		List<PathLabel> examples = new ArrayList<>();
 		examples.add(new PathLabel("Chair 1",  stereoCalib
 				,UtilIO.pathExample("stereo/chair01_left.jpg"),UtilIO.pathExample("stereo/chair01_right.jpg")));
-//		inputs.add(new PathLabel("Chair 2",  new File(dirCalib,"stereo.yaml"),dirImgs+"chair02_left.jpg",dirImgs+"chair02_right.jpg"));
+//		examples.add(new PathLabel("Chair 2",  stereoCalib,
+//				UtilIO.pathExample("stereo/chair02_left.jpg"),UtilIO.pathExample("stereo/chair02_right.jpg")));
 		examples.add(new PathLabel("Stones 1", stereoCalib
 				,UtilIO.pathExample("stereo/stones01_left.jpg"),UtilIO.pathExample("stereo/stones01_right.jpg")));
 		examples.add(new PathLabel("Lantern 1",stereoCalib
 				,UtilIO.pathExample("stereo/lantern01_left.jpg"),UtilIO.pathExample("stereo/lantern01_right.jpg")));
 		examples.add(new PathLabel("Wall 1",   stereoCalib
 				,UtilIO.pathExample("stereo/wall01_left.jpg"),UtilIO.pathExample("stereo/wall01_right.jpg")));
-//		inputs.add(new PathLabel("Garden 1", new File(dirCalib,"stereo.yaml",dirImgs+"garden01_left.jpg",dirImgs+"garden01_right.jpg"));
+//		examples.add(new PathLabel("Garden 1", stereoCalib
+//				,UtilIO.pathExample("stereo/garden01_left.jpg"),UtilIO.pathExample("stereo/garden01_right.jpg")));
 		examples.add(new PathLabel("Garden 2", stereoCalib
 				,UtilIO.pathExample("stereo/garden02_left.jpg"),UtilIO.pathExample("stereo/garden02_right.jpg")));
 		examples.add(new PathLabel("Sundial 1", stereoCalib

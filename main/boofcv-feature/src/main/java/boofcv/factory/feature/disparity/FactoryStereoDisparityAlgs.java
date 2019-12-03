@@ -26,9 +26,7 @@ import boofcv.alg.feature.disparity.block.score.DisparitySparseScoreBM_SAD_F32;
 import boofcv.alg.feature.disparity.block.score.DisparitySparseScoreBM_SAD_U8;
 import boofcv.alg.feature.disparity.block.select.*;
 import boofcv.alg.feature.disparity.sgm.*;
-import boofcv.alg.feature.disparity.sgm.cost.SgmCostAbsoluteDifference;
-import boofcv.alg.feature.disparity.sgm.cost.SgmCostHamming;
-import boofcv.alg.feature.disparity.sgm.cost.StereoMutualInformation;
+import boofcv.alg.feature.disparity.sgm.cost.*;
 import boofcv.concurrency.BoofConcurrency;
 import boofcv.factory.transform.census.FactoryCensusTransform;
 import boofcv.struct.image.*;
@@ -57,6 +55,7 @@ public class FactoryStereoDisparityAlgs {
 		selector.setMaxError(maxError);
 		selector.setTextureThreshold(config.texture);
 
+		SgmCostBase costBase = BoofConcurrency.USE_CONCURRENT ? new SgmCostBase_MT() : new SgmCostBase();
 		SgmStereoDisparity sgm;
 
 		switch( config.errorType) {
@@ -64,12 +63,14 @@ public class FactoryStereoDisparityAlgs {
 				StereoMutualInformation stereoMI = new StereoMutualInformation();
 				stereoMI.configureSmoothing(config.configHMI.smoothingRadius);
 				stereoMI.configureHistogram(config.configHMI.totalGrayLevels);
-				sgm = new SgmStereoDisparityHmi(config.configHMI.pyramidLayers,stereoMI,selector);
+				costBase.setErrorComputer(new SgmMutualInformation_U8(stereoMI));
+				sgm = new SgmStereoDisparityHmi(config.configHMI.pyramidLayers,stereoMI,costBase,selector);
 				((SgmStereoDisparityHmi)sgm).setExtraIterations(config.configHMI.extraIterations);
 			} break;
 
 			case ABSOLUTE_DIFFERENCE: {
-				sgm = new SgmStereoDisparityError(new SgmCostAbsoluteDifference.U8(),selector);
+				costBase.setErrorComputer(new SgmCostAbsoluteDifference.U8());
+				sgm = new SgmStereoDisparityError(costBase,selector);
 			} break;
 
 			case CENSUS: {
@@ -85,7 +86,8 @@ public class FactoryStereoDisparityAlgs {
 				} else {
 					throw new IllegalArgumentException("Unsupported image type");
 				}
-				sgm = new SgmStereoDisparityCensus(censusTran,cost,selector);
+				costBase.setErrorComputer(cost);
+				sgm = new SgmStereoDisparityCensus(censusTran,costBase,selector);
 			} break;
 
 			default:

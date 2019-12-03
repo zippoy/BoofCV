@@ -18,6 +18,8 @@
 
 package boofcv.alg.feature.disparity.sgm;
 
+import boofcv.alg.feature.disparity.sgm.cost.SgmCostBase;
+import boofcv.alg.feature.disparity.sgm.cost.SgmMutualInformation_U8;
 import boofcv.alg.feature.disparity.sgm.cost.StereoMutualInformation;
 import boofcv.alg.transform.pyramid.ConfigPyramid2;
 import boofcv.struct.image.GrayU8;
@@ -118,6 +120,7 @@ class TestSgmStereoDisparityHmi extends CommonSgmChecks{
 		stereoMI.configureHistogram(256);
 		SgmDisparitySelector selector = new SgmDisparitySelector();
 		selector.setRightToLeftTolerance(-1);
-		return new SgmStereoDisparityHmi(new ConfigPyramid2(-1,20,20),stereoMI,selector);
+		SgmCostBase costBase = new SgmCostBase(new SgmMutualInformation_U8(stereoMI));
+		return new SgmStereoDisparityHmi(new ConfigPyramid2(-1,20,20),stereoMI,costBase,selector);
 	}
 }

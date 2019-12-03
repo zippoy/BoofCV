@@ -25,6 +25,8 @@ import boofcv.struct.image.Planar;
 import static boofcv.alg.color.ColorHsv.PI2_F32;
 import static boofcv.alg.color.ColorHsv.d60_F32;
 
+//CONCURRENT_INLINE import boofcv.concurrency.BoofConcurrency;
+
 /**
  * @author Peter Abeles
  */

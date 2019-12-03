@@ -18,8 +18,8 @@
 
 package boofcv.alg.feature.disparity.sgm.cost;
 
-import boofcv.alg.InputSanityCheck;
 import boofcv.alg.feature.disparity.sgm.SgmDisparityCost;
+import boofcv.concurrency.BoofConcurrency;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.ImageBase;
 import boofcv.struct.image.Planar;
@@ -29,25 +29,14 @@ import boofcv.struct.image.Planar;
  *
  * @author Peter Abeles
  */
-public class SgmCostBase<T extends ImageBase<T>> implements SgmDisparityCost<T> {
-	T left, right;
-
-	protected ComputeErrors<T> errorComputer;
-
-	public SgmCostBase() {
-	}
-
-	public SgmCostBase(ComputeErrors<T> errorComputer) {
-		this.errorComputer = errorComputer;
-	}
-
+public class SgmCostBase_MT<T extends ImageBase<T>> extends SgmCostBase<T> {
 	@Override
 	public void process(T left, T right, int disparityMin, int disparityRange, Planar<GrayU16> costYXD) {
 		init(left, right, disparityRange, costYXD);
 
 		int maxDisparity = disparityMin +disparityRange-1;
 
-		for (int y = 0; y < left.height; y++) {
+		BoofConcurrency.loopFor(0,left.height,y->{
 			GrayU16 costXD = costYXD.getBand(y);
 
 			int idxLeft  = left.startIndex  + y*left.stride;
@@ -67,26 +56,6 @@ public class SgmCostBase<T extends ImageBase<T>> implements SgmDisparityCost<T> 
 					costXD.data[idxOut+d] = SgmDisparityCost.MAX_COST;
 				}
 			}
-		}
-	}
-
-	protected void init(T left, T right, int disparityRange, Planar<GrayU16> costYXD) {
-		InputSanityCheck.checkSameShape(left,right);
-		this.left = left;
-		this.right = right;
-
-		// Declare the "tensor" with shape (lengthY,lengthX,lengthD)
-		costYXD.reshape(disparityRange,left.width,left.height);
-	}
-
-	public void setErrorComputer(ComputeErrors<T> errorComputer) {
-		this.errorComputer = errorComputer;
-		this.errorComputer.setOwner(this);
-	}
-
-	public interface ComputeErrors<T extends ImageBase<T>> {
-		void setOwner( SgmCostBase<T> owner );
-
-		void process(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax, GrayU16 costXD );
+		});
 	}
 }

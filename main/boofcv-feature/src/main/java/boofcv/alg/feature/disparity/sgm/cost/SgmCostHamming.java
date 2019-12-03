@@ -20,46 +20,56 @@ package boofcv.alg.feature.disparity.sgm.cost;
 
 import boofcv.alg.descriptor.DescriptorDistance;
 import boofcv.alg.feature.disparity.sgm.SgmDisparityCost;
-import boofcv.struct.image.GrayS32;
-import boofcv.struct.image.GrayS64;
-import boofcv.struct.image.GrayU8;
-import boofcv.struct.image.ImageBase;
+import boofcv.struct.image.*;
 
 /**
  * Computes the cost as the hamming distance between two pixels.
  *
  * @author Peter Abeles
  */
-public abstract class SgmCostHamming<T extends ImageBase<T>> extends SgmCostBase<T> {
+public abstract class SgmCostHamming<T extends ImageBase<T>> implements SgmCostBase.ComputeErrors<T> {
+	SgmCostBase<T> owner;
+
+	@Override
+	public void setOwner(SgmCostBase<T> owner) {
+		this.owner = owner;
+	}
+
 	public static class U8 extends SgmCostHamming<GrayU8> {
 		@Override
-		protected void computeDisparityErrors(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax) {
-			int valLeft = left.data[idxLeft] & 0xFF;
+		public void process(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax, GrayU16 _costXD) {
+			final int valLeft = owner.left.data[idxLeft] & 0xFF;
+			final byte[] rightData = owner.right.data;
+			final short[] costXD = _costXD.data;
 			for (int d = disparityMin; d <= disparityMax; d++) {
-				int valRight = right.data[idxRight--] & 0xFF;
-				costXD.data[idxOut+d] = (short) (SgmDisparityCost.MAX_COST*DescriptorDistance.hamming(valLeft^valRight)/8);
+				int valRight = rightData[idxRight--] & 0xFF;
+				costXD[idxOut+d] = (short) (SgmDisparityCost.MAX_COST*DescriptorDistance.hamming(valLeft^valRight)/8);
 			}
 		}
 	}
 
 	public static class S32 extends SgmCostHamming<GrayS32> {
 		@Override
-		protected void computeDisparityErrors(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax) {
-			int valLeft = left.data[idxLeft];
+		public void process(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax, GrayU16 _costXD) {
+			final int valLeft = owner.left.data[idxLeft];
+			final int[] rightData = owner.right.data;
+			final short[] costXD = _costXD.data;
 			for (int d = disparityMin; d <= disparityMax; d++) {
-				int valRight = right.data[idxRight--];
-				costXD.data[idxOut+d] = (short) (SgmDisparityCost.MAX_COST*DescriptorDistance.hamming(valLeft^valRight)/32);
+				int valRight = rightData[idxRight--];
+				costXD[idxOut+d] = (short) (SgmDisparityCost.MAX_COST*DescriptorDistance.hamming(valLeft^valRight)/32);
 			}
 		}
 	}
 
 	public static class S64 extends SgmCostHamming<GrayS64> {
 		@Override
-		protected void computeDisparityErrors(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax) {
-			long valLeft = left.data[idxLeft];
+		public void process(int idxLeft, int idxRight, int idxOut, int disparityMin, int disparityMax, GrayU16 _costXD) {
+			final long valLeft = owner.left.data[idxLeft];
+			final long[] rightData = owner.right.data;
+			final short[] costXD = _costXD.data;
 			for (int d = disparityMin; d <= disparityMax; d++) {
-				long valRight = right.data[idxRight--];
-				costXD.data[idxOut+d] = (short) (SgmDisparityCost.MAX_COST*DescriptorDistance.hamming(valLeft^valRight)/64);
+				long valRight = rightData[idxRight--];
+				costXD[idxOut+d] = (short) (SgmDisparityCost.MAX_COST*DescriptorDistance.hamming(valLeft^valRight)/64);
 			}
 		}
 	}

@@ -95,6 +95,14 @@ class TestSgmCostAggregation {
 	}
 
 	/**
+	 * Make sure each direction will end up adding cost to every pixel in the image
+	 */
+	@Test
+	public void samplesEntireImage() {
+		fail("Implement");
+	}
+
+	/**
 	 * Compute the score along a direction with an obvious minimum and see if that minimum is found.
 	 * This test was created as a sanity check when hunting down a bug.
 	 */
