@@ -64,19 +64,19 @@ public abstract class SelectErrorWithChecks_F32<DI extends ImageGray<DI>>
 	}
 
 	@Override
-	public void configure(DI imageDisparity, int minDisparity, int maxDisparity , int radiusX ) {
-		super.configure(imageDisparity,minDisparity,maxDisparity,radiusX);
+	public void configure(DI imageDisparity, int minDisparity, int maxDisparity ) {
+		super.configure(imageDisparity,minDisparity,maxDisparity);
 
-		columnScore = new float[maxDisparity-minDisparity];
+		columnScore = new float[rangeDisparity];
 		imageWidth = imageDisparity.width;
 	}
 
 	@Override
 	public void process(int row, float[] scores ) {
 
-		int indexDisparity = imageDisparity.startIndex + row*imageDisparity.stride + radiusX + minDisparity;
+		int indexDisparity = imageDisparity.startIndex + row*imageDisparity.stride  + minDisparity;
 
-		for( int col = minDisparity; col <= imageWidth-regionWidth; col++ ) {
+		for( int col = minDisparity; col < imageWidth; col++ ) {
 			// Determine the number of disparities that can be considered at this column
 			// make sure the disparity search doesn't go outside the image border
 			localMaxDisparity = maxDisparityAtColumnL2R(col);
@@ -143,7 +143,7 @@ public abstract class SelectErrorWithChecks_F32<DI extends ImageGray<DI>>
 	 */
 	private int selectRightToLeft( int col , float[] scores ) {
 		// The range of disparities it can search
-		int maxLocalDisparity = Math.min(imageWidth-regionWidth, col+maxDisparity)-col-minDisparity;
+		int maxLocalDisparity = Math.min(imageWidth, col+maxDisparity)-col-minDisparity;
 
 		int indexBest = 0;
 		int indexScore = col;

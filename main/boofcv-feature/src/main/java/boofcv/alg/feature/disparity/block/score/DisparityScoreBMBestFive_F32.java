@@ -117,7 +117,7 @@ public class DisparityScoreBMBestFive_F32<DI extends ImageGray<DI>>
 			if( computeDisparity == null ) {
 				computeDisparity = disparitySelect0.concurrentCopy();
 			}
-			computeDisparity.configure(disparity,minDisparity,maxDisparity,radiusX*2);
+			computeDisparity.configure(disparity,minDisparity,maxDisparity);
 		}
 	}
 
@@ -226,41 +226,64 @@ public class DisparityScoreBMBestFive_F32<DI extends ImageGray<DI>>
 
 		// disparity as the outer loop to maximize common elements in inner loops, reducing redundant calculations
 		for( int d = minDisparity; d <= maxDisparity; d++ ) {
-
 			// take in account the different in image border between the sub-regions and the effective region
-			int indexSrc = (d-minDisparity)*width + (d-minDisparity) + radiusX;
+			int indexSrc = (d-minDisparity)*width + (d-minDisparity);
 			int indexDst = (d-minDisparity)*width + (d-minDisparity);
-			int end = indexSrc + (width-d-4*radiusX);
-			while( indexSrc < end ) {
-				// sample four outer regions at the corners around the center region
-				float val0 = top[indexSrc-radiusX];
-				float val1 = top[indexSrc+radiusX];
-				float val2 = bottom[indexSrc-radiusX];
-				float val3 = bottom[indexSrc+radiusX];
 
-				// select the two best scores from outer for regions
-				if( compare.compare(val0,val1) < 0 ) {
-					float temp = val0;
-					val0 = val1;
-					val1 = temp;
+			// At the left border just score using the right two regions
+			{
+				int end = indexSrc + radiusX;
+				while( indexSrc < end ) {
+					float val1 = top[indexSrc+radiusX];
+					float val3 = bottom[indexSrc+radiusX];
+					score[indexDst++] = val1 + val3 + middle[indexSrc++];
 				}
+			}
 
-				if( compare.compare(val2,val3) < 0 ) {
-					float temp = val2;
-					val2 = val3;
-					val3 = temp;
+			// Handle the inner image
+			{
+				int end = indexSrc + (width-d-2*radiusX);
+				while (indexSrc < end) {
+					// sample four outer regions at the corners around the center region
+					float val0 = top[indexSrc - radiusX];
+					float val1 = top[indexSrc + radiusX];
+					float val2 = bottom[indexSrc - radiusX];
+					float val3 = bottom[indexSrc + radiusX];
+
+					// select the two best scores from outer for regions
+					if (compare.compare(val0, val1) < 0) {
+						float temp = val0;
+						val0 = val1;
+						val1 = temp;
+					}
+
+					if (compare.compare(val2, val3) < 0) {
+						float temp = val2;
+						val2 = val3;
+						val3 = temp;
+					}
+
+					float s;
+					if (compare.compare(val0, val3) < 0) {
+						s = val2 + val3;
+					} else if (compare.compare(val1, val2) < 0) {
+						s = val2 + val0;
+					} else {
+						s = val0 + val1;
+					}
+
+					score[indexDst++] = s + middle[indexSrc++];
 				}
+			}
 
-				float s;
-				if( compare.compare(val0,val3) < 0 ) {
-					s = val2 + val3;
-				} else if( compare.compare(val1,val2) < 0 ) {
-					s = val2 + val0;
-				} else {
-					s = val0 + val1;
+			// Time for the right border. Score using the left two regions due to lack of other choices
+			{
+				int end = indexSrc + radiusX;
+				while( indexSrc < end ) {
+					float val0 = top[indexSrc-radiusX];
+					float val2 = bottom[indexSrc-radiusX];
+					score[indexDst++] = val0 + val2 + middle[indexSrc++];
 				}
-
-				score[indexDst++] = s + middle[indexSrc++];
 			}
 		}
 	}

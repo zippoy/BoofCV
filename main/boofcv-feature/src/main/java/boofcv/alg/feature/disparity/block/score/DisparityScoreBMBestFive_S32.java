@@ -118,7 +118,14 @@ public class DisparityScoreBMBestFive_S32<T extends ImageBase<T>,DI extends Imag
 			if( computeDisparity == null ) {
 				computeDisparity = disparitySelect0.concurrentCopy();
 			}
-			computeDisparity.configure(disparity,minDisparity,maxDisparity,radiusX*2);
+			computeDisparity.configure(disparity,minDisparity,maxDisparity);
+
+//			for (int i = 0; i < regionHeight; i++) {
+//				Arrays.fill(horizontalScore[i],Integer.MAX_VALUE);
+//				Arrays.fill(verticalScore[i],Integer.MAX_VALUE);
+//			}
+//			Arrays.fill(elementScore,Integer.MAX_VALUE);
+//			Arrays.fill(fiveScore,Integer.MAX_VALUE);
 		}
 	}
 
@@ -148,10 +155,9 @@ public class DisparityScoreBMBestFive_S32<T extends ImageBase<T>,DI extends Imag
 		workSpace.activeVerticalScore = 1;
 
 		// compute horizontal scores for first row block
-		for( int row = 0; row < regionHeight; row++ ) {
-
+		for( int row = 0; row < regionHeight; row++ )
+		{
 			int[] scores = workSpace.horizontalScore[row];
-
 			scoreRows.scoreRow(row0+row, scores, minDisparity, maxDisparity, regionWidth, workSpace.elementScore);
 		}
 
@@ -227,41 +233,89 @@ public class DisparityScoreBMBestFive_S32<T extends ImageBase<T>,DI extends Imag
 
 		// disparity as the outer loop to maximize common elements in inner loops, reducing redundant calculations
 		for( int d = minDisparity; d <= maxDisparity; d++ ) {
-
 			// take in account the different in image border between the sub-regions and the effective region
-			int indexSrc = (d-minDisparity)*width + (d-minDisparity) + radiusX;
+			int indexSrc = (d-minDisparity)*width + (d-minDisparity);
 			int indexDst = (d-minDisparity)*width + (d-minDisparity);
-			int end = indexSrc + (width-d-4*radiusX);
-			while( indexSrc < end ) {
-				// sample four outer regions at the corners around the center region
-				int val0 = top[indexSrc-radiusX];
-				int val1 = top[indexSrc+radiusX];
-				int val2 = bottom[indexSrc-radiusX];
-				int val3 = bottom[indexSrc+radiusX];
 
-				// select the two best scores from outer for regions
-				if( compare.compare(val0,val1) < 0 ) {
-					int temp = val0;
-					val0 = val1;
-					val1 = temp;
+			// At the left border just score using the right two regions
+			{
+				int end = indexSrc + radiusX;
+				while( indexSrc < end ) {
+					int val0 = top[indexSrc];
+					int val1 = top[indexSrc+radiusX];
+					int val2 = bottom[indexSrc];
+					int val3 = bottom[indexSrc+radiusX];
+					// select the two best scores from outer for regions
+					if (compare.compare(val0, val1) < 0) {
+						int temp = val0;
+						val0 = val1;
+						val1 = temp;
+					}
+
+					if (compare.compare(val2, val3) < 0) {
+						int temp = val2;
+						val2 = val3;
+						val3 = temp;
+					}
+
+					int s;
+					if (compare.compare(val0, val3) < 0) {
+						s = val2 + val3;
+					} else if (compare.compare(val1, val2) < 0) {
+						s = val2 + val0;
+					} else {
+						s = val0 + val1;
+					}
+
+					score[indexDst++] = s + middle[indexSrc++];
+
 				}
+			}
 
-				if( compare.compare(val2,val3) < 0 ) {
-					int temp = val2;
-					val2 = val3;
-					val3 = temp;
+			// Handle the inner image
+			{
+				int end = indexSrc + (width-d-2*radiusX);
+				while (indexSrc < end) {
+					// sample four outer regions at the corners around the center region
+					int val0 = top[indexSrc - radiusX];
+					int val1 = top[indexSrc + radiusX];
+					int val2 = bottom[indexSrc - radiusX];
+					int val3 = bottom[indexSrc + radiusX];
+
+					// select the two best scores from outer for regions
+					if (compare.compare(val0, val1) < 0) {
+						int temp = val0;
+						val0 = val1;
+						val1 = temp;
+					}
+
+					if (compare.compare(val2, val3) < 0) {
+						int temp = val2;
+						val2 = val3;
+						val3 = temp;
+					}
+
+					int s;
+					if (compare.compare(val0, val3) < 0) {
+						s = val2 + val3;
+					} else if (compare.compare(val1, val2) < 0) {
+						s = val2 + val0;
+					} else {
+						s = val0 + val1;
+					}
+
+					score[indexDst++] = s + middle[indexSrc++];
 				}
+			}
 
-				int s;
-				if( compare.compare(val0,val3) < 0 ) {
-					s = val2 + val3;
-				} else if( compare.compare(val1,val2) < 0 ) {
-					s = val2 + val0;
-				} else {
-					s = val0 + val1;
+			// Time for the right border. Score using the left two regions due to lack of other choices
+			{
+				int end = indexSrc + radiusX;
+				while( indexSrc < end ) {
+					int val0 = top[indexSrc-radiusX];
+					int val2 = bottom[indexSrc-radiusX];
+					score[indexDst++] = val0 + val2 + middle[indexSrc++];
 				}
-
-				score[indexDst++] = s + middle[indexSrc++];
 			}
 		}
 	}

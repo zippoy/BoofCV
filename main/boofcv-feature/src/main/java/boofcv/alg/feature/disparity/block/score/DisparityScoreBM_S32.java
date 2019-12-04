@@ -82,6 +82,7 @@ public class DisparityScoreBM_S32<T extends ImageBase<T>,DI extends ImageGray<DI
 		} else {
 			computeBlock.accept((WorkSpace)workspace.get(0),0,left.height);
 		}
+		// TODO process the top and bottom borders
 	}
 
 	class WorkSpace {
@@ -90,10 +91,10 @@ public class DisparityScoreBM_S32<T extends ImageBase<T>,DI extends ImageGray<DI
 		// scores along horizontal axis for current block
 		// To allow right to left validation all disparity scores are stored for the entire row
 		// size = num columns * maxDisparity
-		// disparity for column i is stored in elements i*maxDisparity to (i+1)*maxDisparity
+		// disparity for column i is stored in elements i*rangeDisparity to (i+1)*rangeDisparity
 		int[][] horizontalScore = new int[0][0];
 		// summed scores along vertical axis
-		// This is simply the sum of like elements in horizontal score
+		// Sum of horizontalScore along it's rows. This contains the entire box score for a pixel+disparity.
 		int[] verticalScore = new int[0];
 		int[] verticalScoreNorm = new int[0];
 
@@ -110,7 +111,7 @@ public class DisparityScoreBM_S32<T extends ImageBase<T>,DI extends ImageGray<DI
 			if( computeDisparity == null ) {
 				computeDisparity = disparitySelect0.concurrentCopy();
 			}
-			computeDisparity.configure(disparity,minDisparity,maxDisparity,radiusX);
+			computeDisparity.configure(disparity,minDisparity,maxDisparity);
 		}
 	}
 

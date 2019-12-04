@@ -97,9 +97,9 @@ public abstract class DisparityBlockMatchRowFormat
 		InputSanityCheck.checkSameShape(left, right);
 		disparity.reshape(left);
 
-		if( maxDisparity >  left.width-2*radiusX )
+		if( maxDisparity >=  left.width )
 			throw new RuntimeException(
-					"The maximum disparity is too large for this image size: max size "+(left.width-2*radiusX));
+					"The maximum disparity is too large for this image size: max size "+(left.width-1));
 
 		lengthHorizontal = left.width*rangeDisparity;
 
@@ -124,10 +124,10 @@ public abstract class DisparityBlockMatchRowFormat
 	}
 
 	public int getBorderX() {
-		return radiusX;
+		return 0;
 	}
 
 	public int getBorderY() {
-		return radiusY;
+		return 0;
 	}
 }

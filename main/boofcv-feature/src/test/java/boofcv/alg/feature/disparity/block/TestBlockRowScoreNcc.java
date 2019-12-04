@@ -49,14 +49,16 @@ public class TestBlockRowScoreNcc {
 
 		@Override
 		public double naiveScoreRow(int cx, int cy, int disparity, int radius) {
-			double total = 0;
-			for (int x = -radius; x <= radius; x++) {
-				double va = left.get(cx+x,cy);
-				double vb = right.get(cx+x-disparity,cy);
+			int x0 = Math.max(disparity,cx-radius);
+			int x1 = Math.min(left.width,cx+radius+1);
 
+			float total = 0;
+			for (int x = x0; x < x1; x++) {
+				float va = left.get(x,cy);
+				float vb = right.get(x-disparity,cy);
 				total += va*vb;
 			}
-			return total;
+			return total*(radius*2+1)/(x1-x0);
 		}
 
 		@Override
@@ -73,48 +75,55 @@ public class TestBlockRowScoreNcc {
 	public static double ncc( ImageGray left , ImageGray right ,
 							  int cx, int cy, int disparity, int radius , double eps )
 	{
-		double meanLeft = mean(left,cx,cy,radius);
-		double stdLeft = stdev(left,cx,cy,radius,meanLeft);
-		double meanRight = mean(right,cx-disparity,cy,radius);
-		double stdRight = stdev(right,cx-disparity,cy,radius,meanRight);
+		int x0 = Math.max(disparity,cx-radius);
+		int x1 = Math.min(left.width,cx+radius+1);
+		int y0 = Math.max(0,cy-radius);
+		int y1 = Math.min(left.width,cy+radius+1);
+
+		double meanLeft = mean(left,x0,y0,x1,y1);
+		double stdLeft = stdev(left,x0,y0,x1,y1,meanLeft);
+		double meanRight = mean(right,x0,y0,x1,y1);
+		double stdRight = stdev(right,x0,y0,x1,y1,meanRight);
 
 		double total = 0;
-		for (int y = -radius; y <= radius; y++) {
+		for (int y = y0; y < y1; y++) {
 			double sumRow = 0;
-			for (int x = -radius; x <= radius; x++) {
-				double va = GeneralizedImageOps.get(left,cx+x,cy+y)-meanLeft;
-				double vb = GeneralizedImageOps.get(right,cx+x-disparity,cy+y)-meanRight;
+			for (int x = x0; x < x1; x++) {
+				double va = GeneralizedImageOps.get(left,x,y)-meanLeft;
+				double vb = GeneralizedImageOps.get(right,x-disparity,y)-meanRight;
 
 				sumRow += va*vb;
 			}
-			total += sumRow/(radius*2+1);
+//			sumRow *= (2*radius+1)/(x1-x0);
+			total += sumRow/(x1-x0);
 		}
-		total /= (radius*2+1);
+//		total *= (2*radius+1)/(y1-y0);
+		total /= (y1-y0);
 
-		return total/(eps +stdLeft*stdRight);
+		return total/(eps + stdLeft*stdRight);
 	}
 
-	public static double mean( ImageGray img , int cx , int cy , int radius ) {
+	public static double mean( ImageGray img , int x0, int y0, int x1, int y1 ) {
 		double total = 0;
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				total += GeneralizedImageOps.get(img,cx+x,cy+y);
+		for (int y = y0; y < y1; y++) {
+			for (int x = x0; x < x1; x++) {
+				total += GeneralizedImageOps.get(img,x,y);
 			}
 		}
 
-		return total / ((radius*2+1)*(radius*2+1));
+		return total / ((y1-y0)*(x1-x0));
 	}
 
-	public static double stdev(ImageGray img , int cx , int cy , int radius, double mean ) {
+	public static double stdev(ImageGray img , int x0, int y0, int x1, int y1 , double mean ) {
 		double total = 0;
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				double delta = GeneralizedImageOps.get(img,cx+x,cy+y) - mean;
+		for (int y = y0; y < y1; y++) {
+			for (int x = x0; x < x1; x++) {
+				double delta = GeneralizedImageOps.get(img,x,y) - mean;
 				total += delta*delta;
 			}
 		}
 
-		int N = (radius*2+1)*(radius*2+1);
+		int N = (y1-y0)*(x1-x0);
 
 		return Math.sqrt(total/N);
 	}

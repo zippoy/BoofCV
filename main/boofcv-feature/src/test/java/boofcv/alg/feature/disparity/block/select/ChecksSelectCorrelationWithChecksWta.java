@@ -93,7 +93,7 @@ public abstract class ChecksSelectCorrelationWithChecksWta<ArrayData,T extends I
 		int r = 2;
 
 		SelectDisparityWithChecksWta<ArrayData,T> alg = createSelector(1,-1);
-		alg.configure(disparity,minDisparity,maxDisparity,r);
+		alg.configure(disparity,minDisparity,maxDisparity);
 
 		int[] scores = new int[w*rangeDisparity];
 
@@ -121,7 +121,7 @@ public abstract class ChecksSelectCorrelationWithChecksWta<ArrayData,T extends I
 
 		// sanity check, I now set the tolerance to zero
 		alg = createSelector(0,-1);
-		alg.configure(disparity,minDisparity,maxDisparity,2);
+		alg.configure(disparity,minDisparity,maxDisparity);
 		alg.process(y,copyToCorrectType(scores,arrayType));
 		assertEquals(reject, getDisparity(4 + r + minDisparity, y), 1e-8);
 	}
@@ -136,7 +136,7 @@ public abstract class ChecksSelectCorrelationWithChecksWta<ArrayData,T extends I
 		int y = 3;
 
 		SelectDisparityWithChecksWta<ArrayData,T> alg = createSelector(-1,3);
-		alg.configure(disparity,0,maxDisparity,2);
+		alg.configure(disparity,0,maxDisparity);
 
 		int[] scores = new int[w*maxDisparity];
 
@@ -169,7 +169,7 @@ public abstract class ChecksSelectCorrelationWithChecksWta<ArrayData,T extends I
 		int r = 2;
 
 		SelectDisparityWithChecksWta<ArrayData,T> alg = createSelector(-1,3);
-		alg.configure(disparity,minDisparity,maxDisparity,r);
+		alg.configure(disparity,minDisparity,maxDisparity);
 
 		int[] scores = new int[w*maxDisparity];
 

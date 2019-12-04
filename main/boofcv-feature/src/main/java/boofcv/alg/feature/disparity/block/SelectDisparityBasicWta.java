@@ -39,22 +39,17 @@ public abstract class SelectDisparityBasicWta<Array , Disparity extends ImageGra
 	protected int minDisparity;
 	protected int maxDisparity;
 	protected int rangeDisparity;
-	// Radius and width of the comparison region
-	protected int radiusX;
-	protected int regionWidth;
 
 	// How wide the image is
 	protected int imageWidth;
 
 	@Override
-	public void configure(Disparity imageDisparity, int minDisparity , int maxDisparity , int radiusX ) {
+	public void configure(Disparity imageDisparity, int minDisparity , int maxDisparity ) {
 		this.imageDisparity = imageDisparity;
 		this.minDisparity = minDisparity;
 		this.maxDisparity = maxDisparity;
-		this.radiusX = radiusX;
 
 		rangeDisparity = maxDisparity-minDisparity+1;
-		regionWidth = radiusX*2+1;
 		imageWidth = imageDisparity.width;
 	}
 

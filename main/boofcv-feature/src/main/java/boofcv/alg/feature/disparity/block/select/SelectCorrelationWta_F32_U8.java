@@ -37,15 +37,15 @@ import boofcv.struct.image.GrayU8;
 public class SelectCorrelationWta_F32_U8 extends SelectDisparityBasicWta<float[],GrayU8>
 {
 	@Override
-	public void configure(GrayU8 imageDisparity, int minDisparity, int maxDisparity, int radiusX) {
-		super.configure(imageDisparity, minDisparity, maxDisparity, radiusX);
+	public void configure(GrayU8 imageDisparity, int minDisparity, int maxDisparity) {
+		super.configure(imageDisparity, minDisparity, maxDisparity);
 	}
 
 	@Override
 	public void process(int row, float[] blockOfScores) {
-		int indexDisparity = imageDisparity.startIndex + row*imageDisparity.stride + radiusX + minDisparity;
+		int indexDisparity = imageDisparity.startIndex + row*imageDisparity.stride + minDisparity;
 
-		for( int col = minDisparity; col <= imageWidth-regionWidth; col++ ) {
+		for( int col = minDisparity; col < imageWidth; col++ ) {
 			// make sure the disparity search doesn't go outside the image border
 			int localMaxRange = maxDisparityAtColumnL2R(col);
 

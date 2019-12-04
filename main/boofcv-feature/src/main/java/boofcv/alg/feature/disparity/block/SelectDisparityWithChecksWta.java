@@ -58,9 +58,6 @@ public abstract class SelectDisparityWithChecksWta<Array , DI extends ImageGray<
 	protected int invalidDisparity;
 	// max allowed disparity at the current pixel
 	protected int localMaxDisparity;
-	// radius and width of the region being compared
-	protected int radiusX;
-	protected int regionWidth;
 
 	// maximum allowed error
 	protected int maxError;
@@ -89,14 +86,12 @@ public abstract class SelectDisparityWithChecksWta<Array , DI extends ImageGray<
 	public abstract void setTexture( double threshold );
 
 	@Override
-	public void configure(DI imageDisparity, int minDisparity , int maxDisparity , int radiusX ) {
+	public void configure(DI imageDisparity, int minDisparity , int maxDisparity ) {
 		this.imageDisparity = imageDisparity;
 		this.minDisparity = minDisparity;
 		this.maxDisparity = maxDisparity;
-		this.radiusX = radiusX;
 
 		rangeDisparity = maxDisparity-minDisparity+1;
-		regionWidth = radiusX*2+1;
 		invalidDisparity = rangeDisparity+1;
 
 		if( invalidDisparity > (int)imageDisparity.getDataType().getMaxValue()-1 )

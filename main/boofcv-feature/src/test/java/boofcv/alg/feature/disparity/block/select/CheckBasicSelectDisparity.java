@@ -62,7 +62,7 @@ public abstract class CheckBasicSelectDisparity<ArrayData , D extends ImageGray<
 		int y = 3;
 
 		GImageMiscOps.fill(disparity, 0);
-		alg.configure(disparity,0,maxDisparity,2);
+		alg.configure(disparity,0,maxDisparity);
 
 		int scores[] = new int[w*maxDisparity];
 
@@ -118,7 +118,7 @@ public abstract class CheckBasicSelectDisparity<ArrayData , D extends ImageGray<
 		int y = 3;
 
 		GImageMiscOps.fill(disparity,0);
-		alg.configure(disparity,minDisparity,maxDisparity,r);
+		alg.configure(disparity,minDisparity,maxDisparity);
 
 		int scores[] = new int[w*range];
 

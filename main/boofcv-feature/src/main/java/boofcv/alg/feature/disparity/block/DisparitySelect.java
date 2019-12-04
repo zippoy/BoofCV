@@ -45,14 +45,13 @@ public interface DisparitySelect<Array , T extends ImageGray> {
 	 * @param imageDisparity Output disparity image.
 	 * @param minDisparity Minimum disparity that can be computed
 	 * @param maxDisparity Maximum disparity that is calculated
-	 * @param radiusX Radius of the rectangular region being matched along x-axis.
 	 */
-	void configure(T imageDisparity, int minDisparity , int maxDisparity, int radiusX);
+	void configure(T imageDisparity, int minDisparity , int maxDisparity);
 
 	/**
 	 * Processes the array of scores. The score format is described in
 	 * {@link DisparityBlockMatch}.  The results are written directly into the
-	 * disparity image passed to it in {@link #configure(ImageGray, int, int, int)}.
+	 * disparity image passed to it in {@link #configure(ImageGray, int, int)}.
 	 *
 	 * @param row Image row the scores are from.
 	 * @param scoresArray Array containing scores. (int[] or float[])
