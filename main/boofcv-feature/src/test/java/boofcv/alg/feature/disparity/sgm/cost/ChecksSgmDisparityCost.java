@@ -113,7 +113,7 @@ abstract class ChecksSgmDisparityCost {
 
 		for (int d = 0; d < cost.width; d++) {
 			int v = lookup(cost,x,y,d);
-			assertTrue(v <= SgmMutualInformation_U8.MAX_COST);
+			assertTrue(v <= SgmDisparityCost.MAX_COST);
 			if( v < bestValue ) {
 				bestValue = v;
 				best = d;

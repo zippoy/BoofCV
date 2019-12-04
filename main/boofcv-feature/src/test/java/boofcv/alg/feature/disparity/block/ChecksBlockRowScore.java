@@ -90,6 +90,7 @@ public abstract class ChecksBlockRowScore<T extends ImageBase<T>,Array> {
 			for (int x = d; x < width; x++) {
 				double found = get(idx++,scores);
 				double expected = naiveScoreRow(x,row,d,r);
+//				System.out.println();
 				assertEquals(expected,found,1);
 			}
 		}
@@ -134,7 +135,7 @@ public abstract class ChecksBlockRowScore<T extends ImageBase<T>,Array> {
 			scoresEvaluated = scoresSum;
 		}
 
-		for (int d = minDisparity; d < maxDisparity; d++) {
+		for (int d = minDisparity+1; d < maxDisparity; d++) {
 			int idx = width*(d-minDisparity)+d-minDisparity;
 			for (int x = d; x < width; x++) {
 				double expected = naiveScoreRegion(x,row,d,r);
@@ -188,7 +189,8 @@ public abstract class ChecksBlockRowScore<T extends ImageBase<T>,Array> {
 				int vb = right.get(x-disparity,cy);
 				total += computeError(va,vb);
 			}
-			return total*(radius*2+1)/(x1-x0);
+			int r = (x1-x0)/2;
+			return (total*(radius*2+1)+r)/(x1-x0);
 		}
 
 		@Override
@@ -234,7 +236,8 @@ public abstract class ChecksBlockRowScore<T extends ImageBase<T>,Array> {
 				long vb = right.get(x-disparity,cy);
 				total += computeError(va,vb);
 			}
-			return total*(radius*2+1)/(x1-x0);
+			long r = (x1-x0)/2;
+			return (total*(radius*2+1)+r)/(x1-x0);
 		}
 
 		@Override

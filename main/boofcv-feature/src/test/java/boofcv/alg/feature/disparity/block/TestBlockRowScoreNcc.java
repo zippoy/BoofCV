@@ -34,7 +34,7 @@ public class TestBlockRowScoreNcc {
 	class F32 extends ChecksBlockRowScore<GrayF32,float[]> {
 
 		F32() {
-			super(1000, ImageType.single(GrayF32.class));
+			super(2.0, ImageType.single(GrayF32.class));
 		}
 
 		@Override
@@ -75,32 +75,49 @@ public class TestBlockRowScoreNcc {
 	public static double ncc( ImageGray left , ImageGray right ,
 							  int cx, int cy, int disparity, int radius , double eps )
 	{
-		int x0 = Math.max(disparity,cx-radius);
-		int x1 = Math.min(left.width,cx+radius+1);
-		int y0 = Math.max(0,cy-radius);
-		int y1 = Math.min(left.width,cy+radius+1);
+		double meanLeft = mean(left,cx,cy,radius);
+		double stdLeft = stdev(left,cx,cy,radius,meanLeft);
+		double meanRight = mean(right,cx-disparity,cy,radius);
+		double stdRight = stdev(right,cx-disparity,cy,radius,meanRight);
 
-		double meanLeft = mean(left,x0,y0,x1,y1);
-		double stdLeft = stdev(left,x0,y0,x1,y1,meanLeft);
-		double meanRight = mean(right,x0,y0,x1,y1);
-		double stdRight = stdev(right,x0,y0,x1,y1,meanRight);
+
+		// bounds in right image
+		int x0 = Math.max(0,cx-radius-disparity);
+		int x1 = Math.min(left.width-disparity,cx+radius+1-disparity);
+		int y0 = Math.max(0,cy-radius);
+		int y1 = Math.min(left.height,cy+radius+1);
+
+		double dampen = (x1-x0) != (radius*2+1) ? 1.0 : 0.0;
 
 		double total = 0;
 		for (int y = y0; y < y1; y++) {
 			double sumRow = 0;
 			for (int x = x0; x < x1; x++) {
-				double va = GeneralizedImageOps.get(left,x,y)-meanLeft;
-				double vb = GeneralizedImageOps.get(right,x-disparity,y)-meanRight;
-
+				double va = GeneralizedImageOps.get(left,x+disparity,y);
+				double vb = GeneralizedImageOps.get(right,x,y);
 				sumRow += va*vb;
 			}
-//			sumRow *= (2*radius+1)/(x1-x0);
-			total += sumRow/(x1-x0);
+			total += sumRow;
 		}
-//		total *= (2*radius+1)/(y1-y0);
-		total /= (y1-y0);
+		total /= (y1-y0)*(x1-x0);
 
-		return total/(eps + stdLeft*stdRight);
+		return (total-meanLeft*meanRight)/(eps + stdLeft*stdRight + dampen);
+	}
+
+	public static double mean( ImageGray img , int cx, int cy, int radius ) {
+		int x0 = Math.max(0,cx-radius);
+		int x1 = Math.min(img.width,cx+radius+1);
+		int y0 = Math.max(0,cy-radius);
+		int y1 = Math.min(img.height,cy+radius+1);
+		return mean(img,x0,y0,x1,y1);
+	}
+
+	public static double stdev( ImageGray img , int cx, int cy, int radius , double mean ) {
+		int x0 = Math.max(0,cx-radius);
+		int x1 = Math.min(img.width,cx+radius+1);
+		int y0 = Math.max(0,cy-radius);
+		int y1 = Math.min(img.height,cy+radius+1);
+		return stdev(img,x0,y0,x1,y1,mean);
 	}
 
 	public static double mean( ImageGray img , int x0, int y0, int x1, int y1 ) {

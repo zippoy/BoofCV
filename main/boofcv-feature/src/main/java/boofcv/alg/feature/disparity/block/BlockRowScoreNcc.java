@@ -111,12 +111,26 @@ public class BlockRowScoreNcc<T extends ImageBase<T>>
 								   int regionWidth, int regionHeight,
 								   float[] scores, int indexScores, float[] scoresNorm) {
 			final float area = regionWidth*regionHeight;
-
+			int r = regionWidth/2;
 			int stride = helper.meanL.stride;
 			int idxLeft  = row*stride + colLeft;
 			int idxRight = row*stride + colRight;
 
-			for (int i = 0; i < numCols; i++, idxLeft++, idxRight++ ) {
+			// The borders are tricky with NCC. Results get significantly worse without the hacks below.
+			// I think that's because the probability of a large peak go way up with a smaller region. So what
+			// this does is suppress the score's magnitude at the border.
+			// Also tried fancier methods, like linearly increasing the damping with little change in the results
+			score(0,r, scores, indexScores, scoresNorm, area, idxLeft, idxRight,eps+1.0f);
+			score(r,numCols-r, scores, indexScores, scoresNorm, area, idxLeft, idxRight,eps);
+			score(numCols-r,numCols, scores, indexScores, scoresNorm, area, idxLeft, idxRight,eps+1.0f);
+		}
+
+		private void score(int idx0, int idx1, float[] scores, int indexScores, float[] scoresNorm, float area,
+						   int idxLeft, int idxRight, float eps ) {
+			idxLeft += idx0;
+			idxRight += idx0;
+
+			for (int i = idx0; i < idx1; i++, idxLeft++, idxRight++ ) {
 				float correlation = scores[indexScores+i]/area;
 
 				float meanL = helper.meanL.data[idxLeft];

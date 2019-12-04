@@ -134,7 +134,9 @@ public interface BlockRowScore<T extends ImageBase<T>,Array> {
 				}
 				// Scale the score to remove bias from having fewer pixels
 				for (int i = 0; i < regionRadius; i++) {
-					scores[indexScore+regionRadius-i-1] = scores[indexScore+regionRadius-i-1]*regionWidth/(regionWidth-1-i);
+					// + w/2 will round to the closest integer instead of flooring
+					int w = regionWidth-i-1;
+					scores[indexScore+regionRadius-i-1] = (scores[indexScore+regionRadius-i-1]*regionWidth+w/2)/w;
 				}
 
 				// scores for the remaining inner columns. r+1 to colMax-r-1
@@ -149,7 +151,8 @@ public interface BlockRowScore<T extends ImageBase<T>,Array> {
 					scores[indexScore+i] = scores[indexScore+i-1] - elementScore[colMax-regionWidth+i];
 				}
 				for (int i = 0; i < regionRadius; i++) {
-					scores[indexScore+i] = scores[indexScore+i]*regionWidth/(regionWidth-i-1);
+					int w = regionWidth-i-1;
+					scores[indexScore+i] = (scores[indexScore+i]*regionWidth+w/2)/w;
 				}
 			}
 
@@ -179,7 +182,6 @@ public interface BlockRowScore<T extends ImageBase<T>,Array> {
 								   int[] scores, int indexScores, int[] scoresNorm) {}
 	}
 
-	// TODO don't forget to update this!
 	abstract class ArrayF32<T extends ImageBase<T>> implements BlockRowScore<T,float[]> {
 		T left, right;
 
