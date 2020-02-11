@@ -55,7 +55,7 @@ public class KannalaBrandtStoP_F64 implements Point3Transform2_F64 {
 
 		// normalized image coordinates
 		double dx,dy;
-		if( model.coefRad.length == 0 ) {
+		if( model.coefRad.length > 0 ) {
 			// distortion terms. radial and tangential
 			double dr = polynomial(model.coefRad, theta) * polytrig(model.coefRadTrig, cosphi, sinphi);
 			double dt = polynomial(model.coefTan, theta) * polytrig(model.coefRadTrig, cosphi, sinphi);
