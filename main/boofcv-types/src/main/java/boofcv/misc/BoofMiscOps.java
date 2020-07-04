@@ -534,4 +534,14 @@ public class BoofMiscOps {
 			e.printStackTrace();
 		}
 	}
+
+	public static void assertBoof( boolean result ) {
+		if( !result )
+			throw new RuntimeException("assert failed");
+	}
+
+	public static void assertBoof( boolean result , String message ) {
+		if( !result )
+			throw new IllegalArgumentException(message);
+	}
 }
