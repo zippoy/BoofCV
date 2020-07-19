@@ -52,24 +52,24 @@ import static boofcv.misc.BoofMiscOps.assertBoof;
  */
 public class PointTrackerToSimilarImages implements LookupSimilarImages {
 
-	/** Maximum number of frames in forwards and backwards direction which will be searched for being related */
+	/** Maximum number of frames in forwards and backwards direction which will be searched for being related  */
 	public int searchRadius = 5;
 
-	/** Stores observations and track ID for every frame  */
-	public final FastQueue<Frame> frames = new FastQueue<>(Frame::new,Frame::reset);
+	/** Stores observations and track ID for every frame */
+	public final FastQueue<Frame> frames = new FastQueue<>(Frame::new, Frame::reset);
 	/** Quick way to retrieve a frame based on its ID */
-	public final Map<String,Frame> frameMap = new HashMap<>();
-	/** List of all matches between frames */
-	public final FastQueue<Matches> matches = new FastQueue<>(Matches::new,Matches::reset);
+	public final Map<String, Frame> frameMap = new HashMap<>();
+	/**  List of all matches between frames */
+	public final FastQueue<Matches> matches = new FastQueue<>(Matches::new, Matches::reset);
 
 	// shape of images
-	public int imageWidth,imageHeight;
+	public int imageWidth, imageHeight;
 
 	//------------------- Internal Workspace ------------------------------------
 	List<PointTrack> tracks = new ArrayList<>();
 	FastQueue<AssociatedIndex> pairs = new FastQueue<>(AssociatedIndex::new);
 
-	public void initialize( int width , int height ) {
+	public void initialize(int width, int height) {
 		this.imageWidth = width;
 		this.imageHeight = height;
 
@@ -81,9 +81,10 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 
 	/**
 	 * Process the latest observations from the tracker. Save the results and
+	 *
 	 * @param tracker Track after processing the latest frame/image
 	 */
-	public void processFrame( PointTracker<?> tracker ) {
+	public void processFrame(PointTracker<?> tracker) {
 		// Create a new frame and save the observations
 		Frame current = createFrameSaveObservations(tracker);
 
@@ -97,22 +98,22 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 
 		// Create a new frame and record all the tracks visible in this frame
 		Frame current = frames.grow();
-		current.frameID = tracker.getFrameID()+"";
+		current.frameID = tracker.getFrameID() + "";
 		current.initActive(tracks.size());
 		int index = 0;
 		for (int trackCnt = 0; trackCnt < tracks.size(); trackCnt++) {
 			PointTrack t = tracks.get(trackCnt);
-			current.observations[index++] = (float)t.pixel.x;
-			current.observations[index++] = (float)t.pixel.y;
+			current.observations[index++] = (float) t.pixel.x;
+			current.observations[index++] = (float) t.pixel.y;
 			current.ids[trackCnt] = t.featureId;
 			current.id_to_index.put(t.featureId, trackCnt);
 		}
-		frameMap.put(current.frameID,current);
+		frameMap.put(current.frameID, current);
 		return current;
 	}
 
 	private void findRelatedPastFrames(Frame current) {
-		for (int frameCnt = Math.max(0,frames.size-searchRadius); frameCnt < frames.size-1; frameCnt++) {
+		for (int frameCnt = Math.max(0, frames.size - searchRadius); frameCnt < frames.size - 1; frameCnt++) {
 			Frame previous = frames.get(frameCnt);
 
 			// See if there are any features which have been observed in both frames
@@ -120,12 +121,12 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 			final int N = previous.size();
 			for (int previousIdx = 0; previousIdx < N; previousIdx++) {
 				int currentIdx = current.id_to_index.get(previous.getID(previousIdx));
-				if( currentIdx < 0 )
+				if (currentIdx < 0)
 					continue;
-				pairs.grow().set(currentIdx,previousIdx);
+				pairs.grow().set(currentIdx, previousIdx);
 			}
 
-			if( pairs.size == 0 )
+			if (pairs.size == 0)
 				continue;
 
 			// Create a match that describes the observations of common features/tracks
@@ -145,7 +146,6 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 		}
 	}
 
-
 	@Override
 	public List<String> getImageIDs() {
 		return new ArrayList<>(frameMap.keySet());
@@ -155,7 +155,7 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 	public void findSimilar(String target, List<String> similar) {
 		similar.clear();
 		Frame f = frameMap.get(target);
-		assertBoof(f!=null,"Unknown image");
+		assertBoof(f != null, "Unknown image");
 		for (int i = 0; i < f.related.size(); i++) {
 			similar.add(f.related.get(i).frameID);
 		}
@@ -165,11 +165,11 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 	public void lookupPixelFeats(String target, FastQueue<Point2D_F64> features) {
 		features.reset();
 		Frame f = frameMap.get(target);
-		assertBoof(f!=null,"Unknown image");
+		assertBoof(f != null, "Unknown image");
 
 		final int N = f.size();
 		for (int i = 0; i < N; i++) {
-			f.getPixel(i,features.grow());
+			f.getPixel(i, features.grow());
 		}
 	}
 
@@ -180,37 +180,37 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 
 		// Look up the two frames based on their ID.
 		Frame src = frameMap.get(viewA);
-		if( src == null )
+		if (src == null)
 			return false;
 		Frame dst = null;
 		for (int i = 0; i < src.related.size(); i++) {
-			if( src.related.get(i).frameID.equals(viewB) ) {
+			if (src.related.get(i).frameID.equals(viewB)) {
 				dst = src.related.get(i);
 				break;
 			}
 		}
-		if( dst == null )
+		if (dst == null)
 			return false;
 
 		// See if the two frames have any matches together
 		Matches m = null;
 		for (int i = 0; i < src.matches.size(); i++) {
-			if( m.frameSrc == dst || m.frameDst == dst ) {
+			if (m.frameSrc == dst || m.frameDst == dst) {
 				m = src.matches.get(i);
 				break;
 			}
 		}
-		if( m == null )
+		if (m == null)
 			return false;
 
 		// Go through the match and construct the list of associated features
 		boolean swapped = m.frameSrc != src;
 		int size = m.size();
 		for (int i = 0; i < size; i++) {
-			if( swapped ) {
-				pairs.grow().set(m.dst[i],m.src[i]);
+			if (swapped) {
+				pairs.grow().set(m.dst[i], m.src[i]);
 			} else {
-				pairs.grow().set(m.src[i],m.dst[i]);
+				pairs.grow().set(m.src[i], m.dst[i]);
 			}
 		}
 
@@ -219,21 +219,27 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 
 	@Override
 	public void lookupShape(String target, ImageDimension shape) {
-		shape.set(imageWidth,imageHeight);
+		shape.set(imageWidth, imageHeight);
 	}
 
-	static class Matches {
+	/**
+	 * Describes how two frames are related to each other through common observations of the same feature
+	 */
+	protected static class Matches {
+		// observation indexes for the same object in each frame
 		public int[] src;
 		public int[] dst;
 
+		// which frame in the src and which one is the dst
 		public Frame frameSrc;
 		public Frame frameDst;
 
-		public void init( int total ) {
+		public void init(int total) {
 			src = new int[total];
 			dst = new int[total];
 		}
 
+		/** Number of features/observations */
 		public int size() {
 			return src.length;
 		}
@@ -249,36 +255,41 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 	/**
 	 * Observations for a frame. Arrays are used to reduce memory footprint.
 	 */
-	private static class Frame {
+	protected static class Frame {
 		// Unique ID assigned to this frame
 		public String frameID;
 		// pixel observations for all the tracks (x,y) interleaved
-		float[] observations;
+		public float[] observations;
 		// list of all the active tracks in this frame
-		long[] ids;
+		public long[] ids;
 
 		// lookup table from track ID to observation index. If ID not in the set then -1 is returned
-		TLongIntHashMap id_to_index = new TLongIntHashMap() {{no_entry_value = -1;}};
+		TLongIntHashMap id_to_index = new TLongIntHashMap() {{
+			no_entry_value = -1;
+		}};
 
+		// List of frames which are related to this one
 		public final List<Frame> related = new ArrayList<>();
+		// Matches to related frames.
 		public final List<Matches> matches = new ArrayList<>();
 
-		public void initActive(int totalFeatures ) {
-			observations = new float[totalFeatures*2];
+		public void initActive(int totalFeatures) {
+			observations = new float[totalFeatures * 2];
 			ids = new long[totalFeatures];
 		}
 
+		/** Number of feature observations */
 		public int size() {
 			return ids.length;
 		}
 
-		public void getPixel( int index , Point2D_F64 out ) {
+		public void getPixel(int index, Point2D_F64 out) {
 			index *= 2;
 			out.x = observations[index];
-			out.y = observations[index+1];
+			out.y = observations[index + 1];
 		}
 
-		public long getID( int index ) {
+		public long getID(int index) {
 			return ids[index];
 		}
 
@@ -291,5 +302,4 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 			matches.clear();
 		}
 	}
-
 }
