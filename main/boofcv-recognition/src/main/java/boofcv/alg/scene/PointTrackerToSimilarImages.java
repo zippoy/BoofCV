@@ -69,6 +69,9 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 	List<PointTrack> tracks = new ArrayList<>();
 	FastQueue<AssociatedIndex> pairs = new FastQueue<>(AssociatedIndex::new);
 
+	/**
+	 * Resets all data structures and saves the image size. Must be called before other functions
+	 */
 	public void initialize(int width, int height) {
 		this.imageWidth = width;
 		this.imageHeight = height;
@@ -85,6 +88,8 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 	 * @param tracker Track after processing the latest frame/image
 	 */
 	public void processFrame(PointTracker<?> tracker) {
+		assertBoof(imageWidth!=0,"Must call initialize first and specify the image size");
+
 		// Create a new frame and save the observations
 		Frame current = createFrameSaveObservations(tracker);
 
@@ -92,7 +97,10 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 		findRelatedPastFrames(current);
 	}
 
-	private Frame createFrameSaveObservations(PointTracker<?> tracker) {
+	/**
+	 * Create a new frame from the tracker's current observations.
+	 */
+	Frame createFrameSaveObservations(PointTracker<?> tracker) {
 		// get a list of all the tracks which are visible in this frame
 		tracker.getActiveTracks(tracks);
 
@@ -112,14 +120,20 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 		return current;
 	}
 
-	private void findRelatedPastFrames(Frame current) {
-		for (int frameCnt = Math.max(0, frames.size - searchRadius); frameCnt < frames.size - 1; frameCnt++) {
+	/**
+	 * Search the past N frames to see if they are related to the current frame. If related create a new {@link Matches}
+	 * and save which observations points to the same features
+	 * @param current The current from for the tracker
+	 */
+	void findRelatedPastFrames(Frame current) {
+		// only check past frames. When the future frames they will check this one for a connection
+		for (int frameCnt = Math.max(0, frames.size - searchRadius - 1); frameCnt < frames.size - 1; frameCnt++) {
 			Frame previous = frames.get(frameCnt);
 
 			// See if there are any features which have been observed in both frames
 			pairs.reset();
-			final int N = previous.size();
-			for (int previousIdx = 0; previousIdx < N; previousIdx++) {
+			final int prevNumObs = previous.size();
+			for (int previousIdx = 0; previousIdx < prevNumObs; previousIdx++) {
 				int currentIdx = current.id_to_index.get(previous.getID(previousIdx));
 				if (currentIdx < 0)
 					continue;
@@ -146,9 +160,16 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 		}
 	}
 
+	/**
+	 * Returns the list of image ID's in the same order they were processed.
+	 */
 	@Override
 	public List<String> getImageIDs() {
-		return new ArrayList<>(frameMap.keySet());
+		var list = new ArrayList<String>();
+		for (int i = 0; i < frames.size; i++) {
+			list.add(frames.get(i).frameID);
+		}
+		return list;
 	}
 
 	@Override
@@ -195,8 +216,9 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 		// See if the two frames have any matches together
 		Matches m = null;
 		for (int i = 0; i < src.matches.size(); i++) {
-			if (m.frameSrc == dst || m.frameDst == dst) {
-				m = src.matches.get(i);
+			Matches a = src.matches.get(i);
+			if (a.frameSrc == dst || a.frameDst == dst) {
+				m = a;
 				break;
 			}
 		}
@@ -258,7 +280,8 @@ public class PointTrackerToSimilarImages implements LookupSimilarImages {
 	protected static class Frame {
 		// Unique ID assigned to this frame
 		public String frameID;
-		// pixel observations for all the tracks (x,y) interleaved
+		// pixel observations for all the tracks (x,y) interleaved. This is floats and not doubles since we really
+		// don't need double precision for sub-pixel accuracy of visual landmarks. 1/100 is very good precision
 		public float[] observations;
 		// list of all the active tracks in this frame
 		public long[] ids;
