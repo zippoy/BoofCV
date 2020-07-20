@@ -191,7 +191,14 @@ public class ProjectiveToMetricReconstruction implements VerbosePrint {
 
 		GeometricResult result = selfcalib.solve();
 		if( result != GeometricResult.SUCCESS ) {
-			if( verbose != null ) verbose.println("Self calibration failed. "+result);
+			if( verbose != null ) {
+				verbose.println("Self calibration failed. "+result+" used views.size="+workViews.size());
+				// Print out singular values to see if there was a clear null space
+				double[] sv = selfcalib.getSvd().getSingularValues();
+				for (int i = 0; i < sv.length; i++) {
+					verbose.println("  sv["+i+"] = "+sv[i]);
+				}
+			}
 			return false;
 		}
 		// homography to go from projective to metric

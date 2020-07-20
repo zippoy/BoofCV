@@ -23,11 +23,15 @@ import boofcv.alg.sfm.structure2.PairwiseImageGraph2.Motion;
 import boofcv.alg.sfm.structure2.PairwiseImageGraph2.View;
 import lombok.Getter;
 import lombok.Setter;
+import org.ddogleg.struct.VerbosePrint;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 
+import javax.annotation.Nullable;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Expands an existing projective scene to include a new view. At least two neighbors with a known projective transform
@@ -48,7 +52,7 @@ import java.util.List;
  *
  * @author Peter Abeles
  */
-public class ProjectiveExpandByOneView {
+public class ProjectiveExpandByOneView implements VerbosePrint {
 
 	// Used to make two sets of equivalent projective transforms compatible with each other
 	CompatibleProjectiveHomography findCompatible = new CompatibleProjectiveHomography();
@@ -58,6 +62,9 @@ public class ProjectiveExpandByOneView {
 
 	/** Common algorithms for reconstructing the projective scene */
 	@Getter	@Setter PairwiseGraphUtils utils = new PairwiseGraphUtils(new ConfigProjectiveReconstruction());
+
+	// If not null then print debugging information
+	PrintStream verbose;
 
 	//------------------------- Local work space
 
@@ -92,8 +99,13 @@ public class ProjectiveExpandByOneView {
 		this.utils.db = db;
 
 		// Select two known connected Views
-		if( !selectTwoConnections(seed,connections) )
+		if( !selectTwoConnections(seed,connections) ) {
+			if( verbose != null ) {
+				verbose.println( "Failed to expand because two connections couldn't be found. valid.size=" +
+						validCandidates.size());
+			}
 			return false;
+		}
 
 		// Find features which are common between all three views
 		utils.seed = seed;
@@ -101,6 +113,11 @@ public class ProjectiveExpandByOneView {
 		utils.viewC = connections.get(1).other(seed);
 		utils.createThreeViewLookUpTables();
 		utils.findCommonFeatures();
+
+		if( verbose != null ) {
+			verbose.println( "Expanding "+seed.id+" using ( "+utils.viewB.id+" , "+utils.viewC.id+
+					") common="+utils.commonIdx.size+" valid.size="+validCandidates.size());
+		}
 
 		// Estimate trifocal tensor using three view observations
 		utils.createTripleFromCommon();
@@ -153,8 +170,8 @@ public class ProjectiveExpandByOneView {
 		createListOfValid(target, validCandidates);
 
 		double bestScore = 0.0;
-		for (int connectionIdx = 0; connectionIdx < validCandidates.size(); connectionIdx++) {
-			Motion connectB = validCandidates.get(connectionIdx);
+		for (int connectionCnt = 0; connectionCnt < validCandidates.size(); connectionCnt++) {
+			Motion connectB = validCandidates.get(connectionCnt);
 			Motion connectC = findBestCommon(target,connectB, validCandidates);
 			if( connectC == null )
 				continue; // no common connection could be found
@@ -223,5 +240,10 @@ public class ProjectiveExpandByOneView {
 		}
 
 		return bestConnection;
+	}
+
+	@Override
+	public void setVerbose(@Nullable PrintStream out, @Nullable Set<String> configuration) {
+		this.verbose = out;
 	}
 }

@@ -182,6 +182,19 @@ class TestProjectiveReconstructionFromPairwiseGraph {
 		assertSame(expected, selected);
 	}
 
+	/**
+	 * Fail if two connections have no common connection between them
+	 */
+	@Test
+	void selectNextToProcess_TwoConnections_KnownCommon() {
+		fail("Implement");
+	}
+
+	@Test
+	void canFormTripleWithSeed() {
+		fail("Implement");
+	}
+
 	@Test
 	void selectSeeds() {
 		var alg = new ProjectiveReconstructionFromPairwiseGraph();

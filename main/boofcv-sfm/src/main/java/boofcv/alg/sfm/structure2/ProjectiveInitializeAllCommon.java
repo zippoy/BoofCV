@@ -143,7 +143,7 @@ public class ProjectiveInitializeAllCommon implements VerbosePrint {
 		if( seedConnIdx.size > 2 ) { // only do if more than 3 views
 			initializeStructureForAllViews(db, utils.ransac.getMatchSet().size(), seed, seedConnIdx);
 
-			if (!findRemainingCameraMatrices(db, seed, seedFeatsIdx, seedConnIdx))
+			if (!findRemainingCameraMatrices(db, seed, seedConnIdx))
 				return false;
 		} else {
 			viewsByStructureIndex.clear();
@@ -252,8 +252,7 @@ public class ProjectiveInitializeAllCommon implements VerbosePrint {
 	 *
 	 * @return true if successful or false if not
 	 */
-	boolean findRemainingCameraMatrices(LookupSimilarImages db, View seed,
-										GrowQueue_I32 seedFeatsIdx, GrowQueue_I32 seedConnIdx) {
+	boolean findRemainingCameraMatrices(LookupSimilarImages db, View seed, GrowQueue_I32 seedConnIdx) {
 		points3D.reset(); // points in 3D
 		for (int i = 0; i < utils.structure.points.size; i++) {
 			utils.structure.points.data[i].get(points3D.grow());
@@ -280,7 +279,7 @@ public class ProjectiveInitializeAllCommon implements VerbosePrint {
 			// Lookup pixel locations of features in the connected view
 			db.lookupPixelFeats(viewI.id,utils.featsB);
 
-			if ( !computeCameraMatrix(seed, seedFeatsIdx, edge,utils.featsB,cameraMatrix) ) {
+			if ( !computeCameraMatrix(seed, edge,utils.featsB,cameraMatrix) ) {
 				if( verbose != null ) verbose.println("Pose estimator failed! motionIdx="+motionIdx);
 				return false;
 			}
@@ -300,16 +299,17 @@ public class ProjectiveInitializeAllCommon implements VerbosePrint {
 	 * @param cameraMatrix (Output) resulting camera matrix
 	 * @return true if successful
 	 */
-	boolean computeCameraMatrix(View seed, GrowQueue_I32 seedFeatsIdx,
-								Motion edge, FastQueue<Point2D_F64> featsB, DMatrixRMaj cameraMatrix ) {
+	boolean computeCameraMatrix(View seed, Motion edge, FastQueue<Point2D_F64> featsB, DMatrixRMaj cameraMatrix ) {
 		// how to convert a feature in the seed to one in viewI
 		PairwiseGraphUtils.createTableViewAtoB(seed, edge, utils.table_A_to_B);
 
 		// Get the features in the second view
-		for (int i = 0; i < seedFeatsIdx.size; i++) {
-			int seedIdx = seedFeatsIdx.get(i);
+		for (int i = 0; i < inlierToSeed.size; i++) {
+			int seedIdx = inlierToSeed.get(i);
 			int dstIdx = utils.table_A_to_B.data[seedIdx];
 			// Assume that p1 from the seed view has already been set
+			if( dstIdx >= featsB.size )
+				System.out.println("Egads");
 			assocPixel.get(i).p2.set( featsB.get(dstIdx) );
 		}
 

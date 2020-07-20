@@ -58,14 +58,12 @@ import static boofcv.misc.BoofMiscOps.assertBoof;
  */
 public class ProjectiveReconstructionFromPairwiseGraph implements VerbosePrint {
 
-	/**
-	 * Contains the found projective scene
-	 */
+	/** Contains the found projective scene */
 	public final @Getter SceneWorkingGraph workGraph = new SceneWorkingGraph();
 
-	// Computes the initial scene from the seed and some of it's neighbors
+	/** Computes the initial scene from the seed and some of it's neighbors */
 	private final @Getter ProjectiveInitializeAllCommon initProjective;
-	// Adds a new view to an existing projective scene
+	/** Adds a new view to an existing projective scene */
 	private final @Getter ProjectiveExpandByOneView expandProjective;
 	// Common functions used in projective reconstruction
 	final PairwiseGraphUtils utils;
@@ -178,9 +176,12 @@ public class ProjectiveReconstructionFromPairwiseGraph implements VerbosePrint {
 			}
 
 			if(!expandProjective.process(db,workGraph,selected,cameraMatrix)) {
-				if( verbose != null )
-					verbose.println("Failed to expand/add view="+selected.id+". Discarding.");
+				if( verbose != null ) verbose.println("   Failed to expand/add view="+selected.id+". Discarding.");
 				continue;
+			}
+			if( verbose != null ) {
+				verbose.println("    Success Expanding: view=" + selected.id + "  inliers="
+						+ utils.inliersThreeView.size() + " / " + utils.matchesTriple.size);
 			}
 
 			// save the results
@@ -242,7 +243,7 @@ public class ProjectiveReconstructionFromPairwiseGraph implements VerbosePrint {
 		double bestScore = 0.0;
 		int bestConnections = 0;
 		for (int openIdx = 0; openIdx < open.size; openIdx++) {
-			View pview = open.get(openIdx);
+			final View pview = open.get(openIdx);
 
 			int totalConnections = 0;
 			double score = Double.MAX_VALUE;
@@ -252,6 +253,12 @@ public class ProjectiveReconstructionFromPairwiseGraph implements VerbosePrint {
 
 				// View must already be known for connection to be considered
 				if( !workGraph.isKnown(dst) )
+					continue;
+
+				// The destination must connect to at least 1 other node with a 3D connection to pview otherwise
+				// there's a chance the expansion will fail because there are only two or more candidates that don't
+				// connect with each other
+				if (!canFormTripleWithSeed(pview, dst))
 					continue;
 
 				// Only save the worst score
@@ -277,6 +284,29 @@ public class ProjectiveReconstructionFromPairwiseGraph implements VerbosePrint {
 		if( verbose != null ) verbose.println("  open.size="+open.size+" selected.id="+selected.id+" score="+bestScore+" conn="+bestConnections);
 
 		return selected;
+	}
+
+	/**
+	 * Checks to see if 'dst' has a connection which is connected to 'pview' and is known
+	 */
+	private boolean canFormTripleWithSeed(View pview, View dst) {
+		boolean triple = false;
+		for (int dstConnIdx = 0; dstConnIdx < dst.connections.size; dstConnIdx++) {
+			PairwiseImageGraph2.Motion dm = dst.connections.get(dstConnIdx);
+			if( !dm.is3D )
+				continue;
+
+			View third = dm.other(dst);
+			if( third == pview || !workGraph.isKnown(third) )
+				continue;
+
+			PairwiseImageGraph2.Motion mthird = third.findMotion(pview);
+			if( mthird != null && mthird.is3D ) {
+				triple = true;
+				break;
+			}
+		}
+		return triple;
 	}
 
 	/**

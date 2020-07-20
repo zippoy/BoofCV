@@ -82,7 +82,8 @@ public class ExampleMultiviewSceneReconstruction {
 				break;
 		}
 
-		System.out.println("Creating pairwise");
+		System.out.println("----------------------------------------------------------------------------");
+		System.out.println("### Creating Pairwise");
 		var generatePairwise = new GeneratePairwiseImageGraph();
 		generatePairwise.setVerbose(System.out,null);
 		generatePairwise.process(similarImages);
@@ -107,15 +108,16 @@ public class ExampleMultiviewSceneReconstruction {
 		System.out.println("  nodes with no 3D "+nodesWithNo3D);
 
 		System.out.println("----------------------------------------------------------------------------");
-		System.out.println("Projective Reconstruction");
+		System.out.println("### Projective Reconstruction");
 		var projective = new ProjectiveReconstructionFromPairwiseGraph();
 		projective.setVerbose(System.out,null);
+//		projective.getExpandProjective().setVerbose(System.out,null);
 		if( !projective.process(similarImages,pairwise) ) {
 			System.err.println("Projective failed");
 			System.exit(0);
 		}
 		System.out.println("----------------------------------------------------------------------------");
-		System.out.println("Metric Reconstruction");
+		System.out.println("### Metric Reconstruction");
 		BundleAdjustment<SceneStructureMetric> bundleAdjustment = FactoryMultiView.bundleSparseMetric(null);
 		TriangulateNViewsMetric triangulator = FactoryMultiView.triangulateNViewCalibrated(null);
 		var metric = new ProjectiveToMetricReconstruction(new ConfigProjectiveToMetric(),bundleAdjustment,triangulator);
