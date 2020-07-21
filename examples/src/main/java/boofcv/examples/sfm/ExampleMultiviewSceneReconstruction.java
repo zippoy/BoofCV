@@ -78,7 +78,7 @@ public class ExampleMultiviewSceneReconstruction {
 			String id = similarImages.frames.getTail().frameID;
 			System.out.println("frame id = "+id+" active="+active+" dropped="+dropped);
 
-			if( sequence.getFrameNumber() >= 10 )
+			if( sequence.getFrameNumber() >= 6 )
 				break;
 		}
 
@@ -111,7 +111,8 @@ public class ExampleMultiviewSceneReconstruction {
 		System.out.println("### Projective Reconstruction");
 		var projective = new ProjectiveReconstructionFromPairwiseGraph();
 		projective.setVerbose(System.out,null);
-//		projective.getExpandProjective().setVerbose(System.out,null);
+		projective.getInitProjective().setVerbose(System.out,null);
+		projective.getExpandProjective().setVerbose(System.out,null);
 		if( !projective.process(similarImages,pairwise) ) {
 			System.err.println("Projective failed");
 			System.exit(0);
@@ -130,7 +131,7 @@ public class ExampleMultiviewSceneReconstruction {
 		System.out.println("----------------------------------------------------------------------------");
 		System.out.println("Printing a few of the camera");
 		for (int i = 0; i < 5; i++) {
-			projective.getWorkGraph().views.get(""+(10+i)).pinhole.print();
+			projective.getWorkGraph().views.get(""+(i)).pinhole.print();
 		}
 		// TODO visualize
 		System.out.println("done");

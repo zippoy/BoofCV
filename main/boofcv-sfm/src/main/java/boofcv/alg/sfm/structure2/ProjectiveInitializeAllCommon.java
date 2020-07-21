@@ -117,8 +117,10 @@ public class ProjectiveInitializeAllCommon implements VerbosePrint {
 		viewsByStructureIndex.add(seed);
 
 		// find the 3 view combination with the best score
-		if( !selectInitialTriplet(seed,seedConnIdx,selectedTriple))
+		if( !selectInitialTriplet(seed,seedConnIdx,selectedTriple)) {
+			if( verbose != null ) verbose.println("failed to select initial triplet");
 			return false;
+		}
 
 		// Find features which are common between all three views
 		utils.seed = seed;
@@ -127,10 +129,17 @@ public class ProjectiveInitializeAllCommon implements VerbosePrint {
 		utils.createThreeViewLookUpTables();
 		utils.findCommonFeatures(seedFeatsIdx);
 
+		if( verbose != null ) {
+			verbose.println("Selected Triplet: seed='" + utils.seed.id + "' viewB='" + utils.viewB.id + "' viewC='" +
+					utils.viewC.id + "' common.size=" + utils.commonIdx.size);
+		}
+
 		// Estimate the initial projective cameras using trifocal tensor
 		utils.createTripleFromCommon();
-		if( !utils.estimateProjectiveCamerasRobustly() )
+		if( !utils.estimateProjectiveCamerasRobustly() ) {
+			if( verbose != null ) verbose.println("failed to created projective from initial triplet");
 			return false;
+		}
 
 		// look up tables to trace the same feature across different data structures
 		createStructureLookUpTables(seed);
@@ -156,6 +165,8 @@ public class ProjectiveInitializeAllCommon implements VerbosePrint {
 		createObservationsForBundleAdjustment(seedConnIdx);
 
 		// Refine results with projective bundle adjustment
+//		utils.sba.setVerbose(verbose,0); // TODO delete this line
+//		utils.configConvergeSBA.maxIterations = 0;
 		return utils.refineWithBundleAdjustment();
 	}
 
@@ -280,9 +291,11 @@ public class ProjectiveInitializeAllCommon implements VerbosePrint {
 			db.lookupPixelFeats(viewI.id,utils.featsB);
 
 			if ( !computeCameraMatrix(seed, edge,utils.featsB,cameraMatrix) ) {
-				if( verbose != null ) verbose.println("Pose estimator failed! motionIdx="+motionIdx);
+				if( verbose != null ) verbose.println("Pose estimator failed! view='"+viewI.id+"'");
 				return false;
 			}
+			if( verbose != null ) verbose.println("Found pose for view='"+viewI.id+"'");
+
 			db.lookupShape(edge.other(seed).id,shape);
 			utils.structure.setView(motionIdx+1,false,cameraMatrix,shape.width,shape.height);
 			viewsByStructureIndex.add(viewI);

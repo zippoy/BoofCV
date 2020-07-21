@@ -100,6 +100,7 @@ public class PairwiseGraphUtils {
 	public final GrowQueue_I32 table_A_to_B = new GrowQueue_I32();
 	public final GrowQueue_I32 table_A_to_C = new GrowQueue_I32();
 	public final GrowQueue_I32 table_B_to_C = new GrowQueue_I32();
+	public final GrowQueue_I32 table_C_to_A = new GrowQueue_I32();
 	// List indexes in the seed view that are common among all the views
 	public final GrowQueue_I32 commonIdx = new GrowQueue_I32();
 
@@ -186,6 +187,7 @@ public class PairwiseGraphUtils {
 		PairwiseGraphUtils.createTableViewAtoB(seed,connAB,table_A_to_B);
 		PairwiseGraphUtils.createTableViewAtoB(seed,connAC,table_A_to_C);
 		PairwiseGraphUtils.createTableViewAtoB(viewB,connBC,table_B_to_C);
+		PairwiseGraphUtils.createTableViewAtoB(viewC,connAC,table_C_to_A);
 	}
 
 	/**
@@ -200,7 +202,9 @@ public class PairwiseGraphUtils {
 			if( table_A_to_B.data[featureIdxA] < 0 || table_A_to_C.data[featureIdxA] < 0 )
 				continue;
 			// There also must be a connection from B to C for this feature
-			if( table_B_to_C.data[table_A_to_C.data[featureIdxA]] < 0 )
+			int featureIdxB = table_A_to_B.data[featureIdxA];
+			int featureIdxC = table_B_to_C.data[featureIdxB];
+			if( featureIdxC < 0 || table_C_to_A.data[featureIdxC] != featureIdxA )
 				continue;
 			commonIdx.add(featureIdxA);
 		}
